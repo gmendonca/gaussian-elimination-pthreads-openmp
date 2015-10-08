@@ -188,6 +188,7 @@ void gauss() {
   printf("Computing Serially.\n");
 
   /* Gaussian elimination */
+  #pragma omp parallel for private(row,col)
   for (norm = 0; norm < N - 1; norm++) {
     for (row = norm + 1; row < N; row++) {
       multiplier = A[row][norm] / A[norm][norm];
