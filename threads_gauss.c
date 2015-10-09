@@ -181,7 +181,9 @@ int main(int argc, char **argv) {
  * defined in the beginning of this code.  X[] is initialized to zeros.
  */
  void *inner_loop(void * param){
-     int norm = *((int *) param);
+     //int norm = *((int *) param);
+     int norm = (int) param;
+     printf("thread = %d\n", norm);
      float multiplier;
      int row, col;
      for (row = norm + 1; row < N; row++) {
@@ -191,7 +193,7 @@ int main(int argc, char **argv) {
          }
          B[row] -= B[norm] * multiplier;
      }
-     free(param);
+     //free(param);
      return 0;
  }
 
@@ -206,18 +208,18 @@ void gauss() {
 
   /* Gaussian elimination */
   for (norm = 0; norm < N - 1; norm++) {
-      int *param = malloc(sizeof(*param));
+      /*int *param = malloc(sizeof(*param));
       if ( param == NULL ) {
           fprintf(stderr, "Couldn't allocate memory for thread.\n");
           exit(EXIT_FAILURE);
-      }
+      }*/
 
-      *param = norm;
-      pthread_create(&thread[norm], 0, inner_loop, param);
+      //*param = norm;
+      pthread_create(&thread[norm], NULL, inner_loop, (void*) norm);
   }
 
   for (norm = 0; norm < N - 1; norm++) {
-      pthread_join(thread[norm], 0);
+      pthread_join(thread[norm], NULL);
   }
 
   /* (Diagonal elements are not normalized to 1.  This is treated in back
