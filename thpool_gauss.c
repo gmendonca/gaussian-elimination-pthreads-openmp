@@ -261,7 +261,7 @@ void gauss() {
     /* Gaussian elimination */
     for (norm = 0; norm < N - 1; norm++) {
         param[norm] = norm;
-        thpool_add_work(thpool, inner_loop_full, (void*)(param + norm));
+        thpool_add_work(thpool, inner_loop_pool, (void*)(param + norm));
     }
 
     thpool_wait(thpool);
