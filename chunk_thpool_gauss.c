@@ -72,7 +72,7 @@ void parameters(int argc, char **argv) {
     }
   }
   else {
-    printf("Usage: %s <matrix_dimension> [random seed]\n",
+    printf("Usage: %s <matrix_dimension> [number threads] [random seed]\n",
            argv[0]);
     exit(0);
   }

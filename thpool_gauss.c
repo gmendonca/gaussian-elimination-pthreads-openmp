@@ -19,6 +19,7 @@
 /* Program Parameters */
 #define MAXN 2000  /* Max value of N */
 int N;  /* Matrix size */
+int num_threads; /*Number of Threads*/
 
 /* Matrices and vectors */
 volatile float A[MAXN][MAXN], B[MAXN], X[MAXN];
@@ -52,22 +53,28 @@ void parameters(int argc, char **argv) {
     /* Read command-line arguments */
     srand(time_seed());  /* Randomize */
 
-    if (argc == 3) {
-        seed = atoi(argv[2]);
-        srand(seed);
-        printf("Random seed = %i\n", seed);
+    if (argc == 4) {
+      seed = atoi(argv[3]);
+      srand(seed);
+      printf("Random seed = %i\n", seed);
     }
+    if(argc >= 3) {
+      num_threads = atoi(argv[2]);
+    }else {
+      num_threads = 4;
+    }
+    printf("Number of Threads = %i\n", num_threads);
     if (argc >= 2) {
-        N = atoi(argv[1]);
-        if (N < 1 || N > MAXN) {
-            printf("N = %i is out of range.\n", N);
-            exit(0);
-        }
+      N = atoi(argv[1]);
+      if (N < 1 || N > MAXN) {
+        printf("N = %i is out of range.\n", N);
+        exit(0);
+      }
     }
     else {
-        printf("Usage: %s <matrix_dimension> [random seed]\n",
-        argv[0]);
-        exit(0);
+      printf("Usage: %s <matrix_dimension> [number threads] [random seed]\n",
+             argv[0]);
+      exit(0);
     }
 
     /* Print parameters */
@@ -208,7 +215,7 @@ void gauss() {
 
     printf("Computing Serially.\n");
 
-    thpool = thpool_init(4);
+    thpool = thpool_init(num_threads);
 
     /* Gaussian elimination */
     for (norm = 0; norm < N - 1; norm++) {
