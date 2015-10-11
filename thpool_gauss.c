@@ -209,7 +209,7 @@ void gauss() {
 
     printf("Computing Serially.\n");
 
-    thpool = thpool_init(4;
+    thpool = thpool_init(4);
 
     /* Gaussian elimination */
     for (norm = 0; norm < N - 1; norm++) {
