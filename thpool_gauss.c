@@ -215,7 +215,26 @@ void *inner_loop(void* param){
     return 0;
 }
 
-void *inner_loop3(void * param){
+void *inner_loop_pool(void* param){
+    int* norm = (int *)param;
+    printf("thread = %d\n", *norm);
+
+    int arg[N];
+    int row;
+
+    threadpool thpool = thpool_init(8);
+
+    for (row = *norm + 1; row < N; row++) {
+        arg[row] = row;
+        thpool_add_work(thpool, inner_loop2, (void*)(arg + row));
+    }
+
+    thpool_wait(thpool);
+    thpool_destroy(thpool);
+    return 0;
+}
+
+void *inner_loop_full(void * param){
     int* norm = (int *) param;
     printf("thread = %d\n", *norm);
     float multiplier;
@@ -245,7 +264,7 @@ void gauss() {
     /* Gaussian elimination */
     for (norm = 0; norm < N - 1; norm++) {
         param[norm] = norm;
-        thpool_add_work(thpool, inner_loop3, (void*)(param + norm));
+        thpool_add_work(thpool, inner_loop_pool, (void*)(param + norm));
     }
 
     thpool_wait(thpool);
