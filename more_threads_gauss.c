@@ -14,11 +14,12 @@
 #include <sys/times.h>
 #include <sys/time.h>
 #include <time.h>
-#include <omp.h>
+#include <pthread.h>
 
 /* Program Parameters */
 #define MAXN 2000  /* Max value of N */
 int N;  /* Matrix size */
+int num_threads; /*Number of Threads*/
 
 /* Matrices and vectors */
 volatile float A[MAXN][MAXN], B[MAXN], X[MAXN];
@@ -50,7 +51,13 @@ void parameters(int argc, char **argv) {
   /* Read command-line arguments */
   srand(time_seed());  /* Randomize */
 
-  if (argc == 3) {
+  if(argc == 4) {
+    num_threads = atoi(argv[3]);
+  }else {
+    num_threads = 4;
+  }
+  printf("Number of Threads = %i\n", num_threads);
+  if (argc >= 3) {
     seed = atoi(argv[2]);
     srand(seed);
     printf("Random seed = %i\n", seed);
@@ -180,25 +187,62 @@ int main(int argc, char **argv) {
 /* Provided global variables are MAXN, N, A[][], B[], and X[],
  * defined in the beginning of this code.  X[] is initialized to zeros.
  */
+
+ struct thread_param{
+   int norm;
+   int i;
+ };
+
+ void *inner_loop(void * param){
+     //int norm = *((int *) param);
+     struct thread_param* tparam = (struct thread_param*) param;
+     int norm = tparam->norm;
+     int i = tparam->i;
+     //printf("thread = %d\n", norm);
+     float multiplier;
+     int row, col;
+     for (row = norm + i + 1; row < N; row = row + num_threads) {
+         multiplier = A[row][norm] / A[norm][norm];
+         for (col = norm; col < N; col++) {
+             A[row][col] -= A[norm][col] * multiplier;
+         }
+         B[row] -= B[norm] * multiplier;
+     }
+     pthread_exit(0);
+ }
+
 void gauss() {
   int norm, row, col;  /* Normalization row, and zeroing
 			* element row and col */
   float multiplier;
 
+  pthread_t thread[N];
+
   printf("Computing Serially.\n");
 
   /* Gaussian elimination */
-
   for (norm = 0; norm < N - 1; norm++) {
-    #pragma omp parallel for shared(A, B) private(multiplier,row,col)
-    for (row = norm + 1; row < N; row++) {
-      multiplier = A[row][norm] / A[norm][norm];
-      for (col = norm; col < N; col++) {
-	         A[row][col] -= A[norm][col] * multiplier;
+      struct thread_param* param = malloc(num_threads * sizeof(struct thread_param));
+      if ( param == NULL ) {
+          fprintf(stderr, "Couldn't allocate memory for thread.\n");
+          exit(EXIT_FAILURE);
       }
-      B[row] -= B[norm] * multiplier;
-    }
+
+      int i, j;
+
+      for(i = 0; i < num_threads; i++){
+        param[i].norm = norm;
+        param[i].i = i;
+        pthread_create(&thread[i], NULL, inner_loop, (void*) &param[i]);
+      }
+
+      for (j = 0; j < num_threads; j++) {
+          pthread_join(thread[j], NULL);
+      }
+
+      free(param);
   }
+
   /* (Diagonal elements are not normalized to 1.  This is treated in back
    * substitution.)
    */

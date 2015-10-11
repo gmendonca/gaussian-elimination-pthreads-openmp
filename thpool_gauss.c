@@ -183,6 +183,7 @@ int main(int argc, char **argv) {
 /* Provided global variables are MAXN, N, A[][], B[], and X[],
 * defined in the beginning of this code.  X[] is initialized to zeros.
 */
+<<<<<<< HEAD
 void *inner_loop2(void* arg){
     int* row = (int*)arg;
     int norm = *row - 1;
@@ -230,8 +231,10 @@ void *inner_loop_pool(void* param){
     }
     return 0;
 }
+=======
+>>>>>>> 03c76db834dfcdf429d883ca51dafe26754e021a
 
-void *inner_loop_full(void * param){
+void *inner_loop(void * param){
     int* norm = (int *) param;
     printf("thread = %d\n", *norm);
     float multiplier;
@@ -256,12 +259,12 @@ void gauss() {
 
     printf("Computing Serially.\n");
 
-    thpool = thpool_init(N-1);
+    thpool = thpool_init(4;
 
     /* Gaussian elimination */
     for (norm = 0; norm < N - 1; norm++) {
         param[norm] = norm;
-        thpool_add_work(thpool, inner_loop_pool, (void*)(param + norm));
+        thpool_add_work(thpool, inner_loop, (void*)(param + norm));
     }
 
     thpool_wait(thpool);
