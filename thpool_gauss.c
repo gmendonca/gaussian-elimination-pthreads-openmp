@@ -181,60 +181,8 @@ int main(int argc, char **argv) {
 /* Provided global variables are MAXN, N, A[][], B[], and X[],
 * defined in the beginning of this code.  X[] is initialized to zeros.
 */
-void *inner_loop2(void* arg){
-    int* row = (int*)arg;
-    int norm = *row - 1;
-    int col;
-    float multiplier;
 
-    multiplier = A[*row][norm] / A[norm][norm];
-    for (col = norm; col < N; col++) {
-        A[*row][col] -= A[norm][col] * multiplier;
-    }
-    B[*row] -= B[norm] * multiplier;
-    return 0;
-}
-
-void *inner_loop(void* param){
-    int* norm = (int *)param;
-    printf("thread = %d\n", *norm);
-
-    pthread_t thread[N];
-    int arg[N];
-    int row;
-
-    for (row = *norm + 1; row < N; row++) {
-        arg[row] = row;
-        //thpool_add_work(thpool2, inner_loop2, (void*)(arg + row));
-        pthread_create(&thread[row], NULL, inner_loop2, (void*)(arg + row));
-    }
-
-    for (row = *norm + 1; row < N; row++) {
-        pthread_join(thread[row], NULL);
-    }
-    return 0;
-}
-
-void *inner_loop_pool(void* param){
-    int* norm = (int *)param;
-    printf("thread = %d\n", *norm);
-
-    int arg[N];
-    int row;
-
-    threadpool thpool = thpool_init(8);
-
-    for (row = *norm + 1; row < N; row++) {
-        arg[row] = row;
-        thpool_add_work(thpool, inner_loop2, (void*)(arg + row));
-    }
-
-    thpool_wait(thpool);
-    thpool_destroy(thpool);
-    return 0;
-}
-
-void *inner_loop_full(void * param){
+void *inner_loop(void * param){
     int* norm = (int *) param;
     printf("thread = %d\n", *norm);
     float multiplier;
@@ -264,7 +212,7 @@ void gauss() {
     /* Gaussian elimination */
     for (norm = 0; norm < N - 1; norm++) {
         param[norm] = norm;
-        thpool_add_work(thpool, inner_loop_full, (void*)(param + norm));
+        thpool_add_work(thpool, inner_loop, (void*)(param + norm));
     }
 
     thpool_wait(thpool);
