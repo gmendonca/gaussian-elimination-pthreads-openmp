@@ -14,5 +14,6 @@ program:
 
 	 $(CC) thpool_gauss.c thpool.c -o pool.out
 
+
 clean:
 	rm -rf *.out
