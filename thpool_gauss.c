@@ -34,6 +34,8 @@ void gauss();  /* The function you will provide.
 * It is called only on the parent.
 */
 
+threadpool thpool;
+
 /* returns a seed for srand based on the time */
 unsigned int time_seed() {
     struct timeval t;
@@ -222,15 +224,10 @@ void *inner_loop_pool(void* param){
     int arg[N];
     int row;
 
-    threadpool thpool = thpool_init(8);
-
     for (row = *norm + 1; row < N; row++) {
         arg[row] = row;
         thpool_add_work(thpool, inner_loop2, (void*)(arg + row));
     }
-
-    thpool_wait(thpool);
-    thpool_destroy(thpool);
     return 0;
 }
 
@@ -259,12 +256,12 @@ void gauss() {
 
     printf("Computing Serially.\n");
 
-    threadpool thpool = thpool_init(8);
+    thpool = thpool_init(N-1);
 
     /* Gaussian elimination */
     for (norm = 0; norm < N - 1; norm++) {
         param[norm] = norm;
-        thpool_add_work(thpool, inner_loop_pool, (void*)(param + norm));
+        thpool_add_work(thpool, inner_loop_full, (void*)(param + norm));
     }
 
     thpool_wait(thpool);
