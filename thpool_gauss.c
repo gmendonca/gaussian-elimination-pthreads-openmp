@@ -14,7 +14,7 @@
 #include <sys/times.h>
 #include <sys/time.h>
 #include <time.h>
-#include <thpool.h>
+#include "thpool.h"
 
 /* Program Parameters */
 #define MAXN 2000  /* Max value of N */
@@ -180,46 +180,47 @@ int main(int argc, char **argv) {
 /* Provided global variables are MAXN, N, A[][], B[], and X[],
  * defined in the beginning of this code.  X[] is initialized to zeros.
  */
- void *inner_loop(void * param){
-     int norm = *((int *) param);
-     printf("thread = %d\n", norm);
+ void *inner_loop(void* param){
+     int* norm = (int *)param;
+     printf("thread = %d\n", *norm);
      float multiplier;
-     int row, col;
-     for (row = norm + 1; row < N; row++) {
-         multiplier = A[row][norm] / A[norm][norm];
-         for (col = norm; col < N; col++) {
-             A[row][col] -= A[norm][col] * multiplier;
+     int col, row;
+     for (row = *norm + 1; row < N; row++) {
+         multiplier = A[row][*norm] / A[*norm][*norm];
+         for (col = *norm; col < N; col++) {
+             A[row][col] -= A[*norm][col] * multiplier;
          }
-         B[row] -= B[norm] * multiplier;
+         B[row] -= B[*norm] * multiplier;
      }
-     free(param);
+     //free(param);
      return 0;
  }
 
 void gauss() {
   int norm, row, col;  /* Normalization row, and zeroing
 			* element row and col */
-  float multiplier;
 
-  pthread_t thread[N];
+  float multiplier;
+  int param[N];
+  //pthread_t thread[N];
 
   printf("Computing Serially.\n");
 
+  threadpool thpool = thpool_init(4);
+
   /* Gaussian elimination */
   for (norm = 0; norm < N - 1; norm++) {
-      int *param = malloc(sizeof(*param));
-      if ( param == NULL ) {
-          fprintf(stderr, "Couldn't allocate memory for thread.\n");
-          exit(EXIT_FAILURE);
-      }
-
-      *param = norm;
-      pthread_create(&thread[norm], NULL, inner_loop, param);
+      param[norm] = norm;
+      //pthread_create(&thread[norm], NULL, inner_loop, (void*)(param + norm));
+      thpool_add_work(thpool, inner_loop, (void*)(param + norm));
   }
 
-  for (norm = 0; norm < N - 1; norm++) {
+  thpool_wait(thpool);
+  thpool_destroy(thpool);
+
+  /*for (norm = 0; norm < N - 1; norm++) {
       pthread_join(thread[norm], NULL);
-  }
+  }*/
 
   /* (Diagonal elements are not normalized to 1.  This is treated in back
    * substitution.)
