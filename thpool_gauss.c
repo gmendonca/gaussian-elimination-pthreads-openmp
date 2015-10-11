@@ -1,10 +1,10 @@
 /* Gaussian elimination without pivoting.
- * Compile with "gcc gauss.c"
- */
+* Compile with "gcc gauss.c"
+*/
 
 /* ****** ADD YOUR CODE AT THE END OF THIS FILE. ******
- * You need not submit the provided code.
- */
+* You need not submit the provided code.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +14,7 @@
 #include <sys/times.h>
 #include <sys/time.h>
 #include <time.h>
+#include <pthread.h>
 #include "thpool.h"
 
 /* Program Parameters */
@@ -29,210 +30,238 @@ volatile float A[MAXN][MAXN], B[MAXN], X[MAXN];
 
 /* Prototype */
 void gauss();  /* The function you will provide.
-		* It is this routine that is timed.
-		* It is called only on the parent.
-		*/
+* It is this routine that is timed.
+* It is called only on the parent.
+*/
 
 /* returns a seed for srand based on the time */
 unsigned int time_seed() {
-  struct timeval t;
-  struct timezone tzdummy;
+    struct timeval t;
+    struct timezone tzdummy;
 
-  gettimeofday(&t, &tzdummy);
-  return (unsigned int)(t.tv_usec);
+    gettimeofday(&t, &tzdummy);
+    return (unsigned int)(t.tv_usec);
 }
 
 /* Set the program parameters from the command-line arguments */
 void parameters(int argc, char **argv) {
-  int seed = 0;  /* Random seed */
-  char uid[32]; /*User name */
+    int seed = 0;  /* Random seed */
+    char uid[32]; /*User name */
 
-  /* Read command-line arguments */
-  srand(time_seed());  /* Randomize */
+    /* Read command-line arguments */
+    srand(time_seed());  /* Randomize */
 
-  if (argc == 3) {
-    seed = atoi(argv[2]);
-    srand(seed);
-    printf("Random seed = %i\n", seed);
-  }
-  if (argc >= 2) {
-    N = atoi(argv[1]);
-    if (N < 1 || N > MAXN) {
-      printf("N = %i is out of range.\n", N);
-      exit(0);
+    if (argc == 3) {
+        seed = atoi(argv[2]);
+        srand(seed);
+        printf("Random seed = %i\n", seed);
     }
-  }
-  else {
-    printf("Usage: %s <matrix_dimension> [random seed]\n",
-           argv[0]);
-    exit(0);
-  }
+    if (argc >= 2) {
+        N = atoi(argv[1]);
+        if (N < 1 || N > MAXN) {
+            printf("N = %i is out of range.\n", N);
+            exit(0);
+        }
+    }
+    else {
+        printf("Usage: %s <matrix_dimension> [random seed]\n",
+        argv[0]);
+        exit(0);
+    }
 
-  /* Print parameters */
-  printf("\nMatrix dimension N = %i.\n", N);
+    /* Print parameters */
+    printf("\nMatrix dimension N = %i.\n", N);
 }
 
 /* Initialize A and B (and X to 0.0s) */
 void initialize_inputs() {
-  int row, col;
+    int row, col;
 
-  printf("\nInitializing...\n");
-  for (col = 0; col < N; col++) {
-    for (row = 0; row < N; row++) {
-      A[row][col] = (float)rand() / 32768.0;
+    printf("\nInitializing...\n");
+    for (col = 0; col < N; col++) {
+        for (row = 0; row < N; row++) {
+            A[row][col] = (float)rand() / 32768.0;
+        }
+        B[col] = (float)rand() / 32768.0;
+        X[col] = 0.0;
     }
-    B[col] = (float)rand() / 32768.0;
-    X[col] = 0.0;
-  }
 
 }
 
 /* Print input matrices */
 void print_inputs() {
-  int row, col;
+    int row, col;
 
-  if (N < 10) {
-    printf("\nA =\n\t");
-    for (row = 0; row < N; row++) {
-      for (col = 0; col < N; col++) {
-	printf("%5.2f%s", A[row][col], (col < N-1) ? ", " : ";\n\t");
-      }
+    if (N < 10) {
+        printf("\nA =\n\t");
+        for (row = 0; row < N; row++) {
+            for (col = 0; col < N; col++) {
+                printf("%5.2f%s", A[row][col], (col < N-1) ? ", " : ";\n\t");
+            }
+        }
+        printf("\nB = [");
+        for (col = 0; col < N; col++) {
+            printf("%5.2f%s", B[col], (col < N-1) ? "; " : "]\n");
+        }
     }
-    printf("\nB = [");
-    for (col = 0; col < N; col++) {
-      printf("%5.2f%s", B[col], (col < N-1) ? "; " : "]\n");
-    }
-  }
 }
 
 void print_X() {
-  int row;
+    int row;
 
-  if (N < 100) {
-    printf("\nX = [");
-    for (row = 0; row < N; row++) {
-      printf("%5.2f%s", X[row], (row < N-1) ? "; " : "]\n");
+    if (N < 100) {
+        printf("\nX = [");
+        for (row = 0; row < N; row++) {
+            printf("%5.2f%s", X[row], (row < N-1) ? "; " : "]\n");
+        }
     }
-  }
 }
 
 int main(int argc, char **argv) {
-  /* Timing variables */
-  struct timeval etstart, etstop;  /* Elapsed times using gettimeofday() */
-  struct timezone tzdummy;
-  clock_t etstart2, etstop2;  /* Elapsed times using times() */
-  unsigned long long usecstart, usecstop;
-  struct tms cputstart, cputstop;  /* CPU times for my processes */
+    /* Timing variables */
+    struct timeval etstart, etstop;  /* Elapsed times using gettimeofday() */
+    struct timezone tzdummy;
+    clock_t etstart2, etstop2;  /* Elapsed times using times() */
+    unsigned long long usecstart, usecstop;
+    struct tms cputstart, cputstop;  /* CPU times for my processes */
 
-  /* Process program parameters */
-  parameters(argc, argv);
+    /* Process program parameters */
+    parameters(argc, argv);
 
-  /* Initialize A and B */
-  initialize_inputs();
+    /* Initialize A and B */
+    initialize_inputs();
 
-  /* Print input matrices */
-  print_inputs();
+    /* Print input matrices */
+    print_inputs();
 
-  /* Start Clock */
-  printf("\nStarting clock.\n");
-  gettimeofday(&etstart, &tzdummy);
-  etstart2 = times(&cputstart);
+    /* Start Clock */
+    printf("\nStarting clock.\n");
+    gettimeofday(&etstart, &tzdummy);
+    etstart2 = times(&cputstart);
 
-  /* Gaussian Elimination */
-  gauss();
+    /* Gaussian Elimination */
+    gauss();
 
-  /* Stop Clock */
-  gettimeofday(&etstop, &tzdummy);
-  etstop2 = times(&cputstop);
-  printf("Stopped clock.\n");
-  usecstart = (unsigned long long)etstart.tv_sec * 1000000 + etstart.tv_usec;
-  usecstop = (unsigned long long)etstop.tv_sec * 1000000 + etstop.tv_usec;
+    /* Stop Clock */
+    gettimeofday(&etstop, &tzdummy);
+    etstop2 = times(&cputstop);
+    printf("Stopped clock.\n");
+    usecstart = (unsigned long long)etstart.tv_sec * 1000000 + etstart.tv_usec;
+    usecstop = (unsigned long long)etstop.tv_sec * 1000000 + etstop.tv_usec;
 
-  /* Display output */
-  print_X();
+    /* Display output */
+    print_X();
 
-  /* Display timing results */
-  printf("\nElapsed time = %g ms.\n",
-	 (float)(usecstop - usecstart)/(float)1000);
+    /* Display timing results */
+    printf("\nElapsed time = %g ms.\n",
+    (float)(usecstop - usecstart)/(float)1000);
 
-  printf("(CPU times are accurate to the nearest %g ms)\n",
-	 1.0/(float)CLOCKS_PER_SEC * 1000.0);
-  printf("My total CPU time for parent = %g ms.\n",
-	 (float)( (cputstop.tms_utime + cputstop.tms_stime) -
-		  (cputstart.tms_utime + cputstart.tms_stime) ) /
-	 (float)CLOCKS_PER_SEC * 1000);
-  printf("My system CPU time for parent = %g ms.\n",
-	 (float)(cputstop.tms_stime - cputstart.tms_stime) /
-	 (float)CLOCKS_PER_SEC * 1000);
-  printf("My total CPU time for child processes = %g ms.\n",
-	 (float)( (cputstop.tms_cutime + cputstop.tms_cstime) -
-		  (cputstart.tms_cutime + cputstart.tms_cstime) ) /
-	 (float)CLOCKS_PER_SEC * 1000);
-      /* Contrary to the man pages, this appears not to include the parent */
-  printf("--------------------------------------------\n");
+    printf("(CPU times are accurate to the nearest %g ms)\n",
+    1.0/(float)CLOCKS_PER_SEC * 1000.0);
+    printf("My total CPU time for parent = %g ms.\n",
+    (float)( (cputstop.tms_utime + cputstop.tms_stime) -
+    (cputstart.tms_utime + cputstart.tms_stime) ) /
+    (float)CLOCKS_PER_SEC * 1000);
+    printf("My system CPU time for parent = %g ms.\n",
+    (float)(cputstop.tms_stime - cputstart.tms_stime) /
+    (float)CLOCKS_PER_SEC * 1000);
+    printf("My total CPU time for child processes = %g ms.\n",
+    (float)( (cputstop.tms_cutime + cputstop.tms_cstime) -
+    (cputstart.tms_cutime + cputstart.tms_cstime) ) /
+    (float)CLOCKS_PER_SEC * 1000);
+    /* Contrary to the man pages, this appears not to include the parent */
+    printf("--------------------------------------------\n");
 
-  exit(0);
+    exit(0);
 }
 
 /* ------------------ Above Was Provided --------------------- */
 
 /****** You will replace this routine with your own parallel version *******/
 /* Provided global variables are MAXN, N, A[][], B[], and X[],
- * defined in the beginning of this code.  X[] is initialized to zeros.
- */
- void *inner_loop(void* param){
-     int* norm = (int *)param;
-     printf("thread = %d\n", *norm);
-     float multiplier;
-     int col, row;
-     for (row = *norm + 1; row < N; row++) {
-         multiplier = A[row][*norm] / A[*norm][*norm];
-         for (col = *norm; col < N; col++) {
-             A[row][col] -= A[*norm][col] * multiplier;
-         }
-         B[row] -= B[*norm] * multiplier;
-     }
-     //free(param);
-     return 0;
- }
+* defined in the beginning of this code.  X[] is initialized to zeros.
+*/
+void *inner_loop2(void* arg){
+    int* row = (int*)arg;
+    int norm = *row - 1;
+    int col;
+    float multiplier;
+
+    multiplier = A[*row][norm] / A[norm][norm];
+    for (col = norm; col < N; col++) {
+        A[*row][col] -= A[norm][col] * multiplier;
+    }
+    B[*row] -= B[norm] * multiplier;
+    return 0;
+}
+
+void *inner_loop(void* param){
+    int* norm = (int *)param;
+    printf("thread = %d\n", *norm);
+
+    pthread_t thread[N];
+    int arg[N];
+    int row;
+
+    for (row = *norm + 1; row < N; row++) {
+        arg[row] = row;
+        //thpool_add_work(thpool2, inner_loop2, (void*)(arg + row));
+        pthread_create(&thread[row], NULL, inner_loop2, (void*)(arg + row));
+    }
+
+    for (row = *norm + 1; row < N; row++) {
+        pthread_join(thread[row], NULL);
+    }
+    return 0;
+}
+
+void *inner_loop3(void * param){
+    int* norm = (int *) param;
+    printf("thread = %d\n", *norm);
+    float multiplier;
+    int row, col;
+    for (row = *norm + 1; row < N; row++) {
+        multiplier = A[row][*norm] / A[*norm][*norm];
+        for (col = *norm; col < N; col++) {
+            A[row][col] -= A[*norm][col] * multiplier;
+        }
+        B[row] -= B[*norm] * multiplier;
+    }
+    return 0;
+}
 
 void gauss() {
-  int norm, row, col;  /* Normalization row, and zeroing
-			* element row and col */
+    int norm, row, col;  /* Normalization row, and zeroing
+    * element row and col */
 
-  float multiplier;
-  int param[N];
-  //pthread_t thread[N];
+    float multiplier;
+    int param[N];
+    //pthread_t thread[N];
 
-  printf("Computing Serially.\n");
+    printf("Computing Serially.\n");
 
-  threadpool thpool = thpool_init(4);
+    threadpool thpool = thpool_init(8);
 
-  /* Gaussian elimination */
-  for (norm = 0; norm < N - 1; norm++) {
-      param[norm] = norm;
-      //pthread_create(&thread[norm], NULL, inner_loop, (void*)(param + norm));
-      thpool_add_work(thpool, inner_loop, (void*)(param + norm));
-  }
-
-  thpool_wait(thpool);
-  thpool_destroy(thpool);
-
-  /*for (norm = 0; norm < N - 1; norm++) {
-      pthread_join(thread[norm], NULL);
-  }*/
-
-  /* (Diagonal elements are not normalized to 1.  This is treated in back
-   * substitution.)
-   */
-
-
-  /* Back substitution */
-  for (row = N - 1; row >= 0; row--) {
-    X[row] = B[row];
-    for (col = N-1; col > row; col--) {
-      X[row] -= A[row][col] * X[col];
+    /* Gaussian elimination */
+    for (norm = 0; norm < N - 1; norm++) {
+        param[norm] = norm;
+        thpool_add_work(thpool, inner_loop3, (void*)(param + norm));
     }
-    X[row] /= A[row][row];
-  }
+
+    thpool_wait(thpool);
+    thpool_destroy(thpool);
+
+    /* (Diagonal elements are not normalized to 1.  This is treated in back
+    * substitution.)
+    */
+
+
+    /* Back substitution */
+    for (row = N - 1; row >= 0; row--) {
+        X[row] = B[row];
+        for (col = N-1; col > row; col--) {
+            X[row] -= A[row][col] * X[col];
+        }
+        X[row] /= A[row][row];
+    }
 }
