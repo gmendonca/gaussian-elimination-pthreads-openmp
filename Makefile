@@ -1,6 +1,7 @@
-CC=gcc
+SHELL:=`/bin/bash`
+CC:=gcc
 
-program:
+program: gauss.c threads_gauss.c chunk_threads_gauss.c openmp_gauss.c chunk_thpool_gauss.c thpool_gauss.c thpool.c
 
 	 $(CC) gauss.c -o gauss.out
 
@@ -10,9 +11,12 @@ program:
 
 	 $(CC) openmp_gauss.c -fopenmp -o openmp.out
 
-	 $(CC) chunk_thpool_gauss.c thpool.c -o chunkpool.out
+	 $(CC) chunk_thpool_gauss.c thpool.c -pthread -o chunkpool.out
 
-	 $(CC) thpool_gauss.c thpool.c -o pool.out
+	 $(CC) thpool_gauss.c thpool.c -pthread -o pool.out
+
+install:
+	source script.sh
 
 
 clean:
