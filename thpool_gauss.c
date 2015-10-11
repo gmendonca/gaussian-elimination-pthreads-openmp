@@ -14,7 +14,6 @@
 #include <sys/times.h>
 #include <sys/time.h>
 #include <time.h>
-#include <pthread.h>
 #include "thpool.h"
 
 /* Program Parameters */
