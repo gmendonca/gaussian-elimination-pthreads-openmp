@@ -54,17 +54,17 @@ void parameters(int argc, char **argv) {
   /* Read command-line arguments */
   srand(time_seed());  /* Randomize */
 
-  if(argc == 4) {
-    num_threads = atoi(argv[3]);
+  if (argc == 4) {
+    seed = atoi(argv[3]);
+    srand(seed);
+    printf("Random seed = %i\n", seed);
+  }
+  if(argc >= 3) {
+    num_threads = atoi(argv[2]);
   }else {
     num_threads = 4;
   }
   printf("Number of Threads = %i\n", num_threads);
-  if (argc >= 3) {
-    seed = atoi(argv[2]);
-    srand(seed);
-    printf("Random seed = %i\n", seed);
-  }
   if (argc >= 2) {
     N = atoi(argv[1]);
     if (N < 1 || N > MAXN) {
@@ -219,7 +219,7 @@ void gauss() {
 			* element row and col */
   float multiplier;
 
-  thpool = thpool_init(4);
+  thpool = thpool_init(num_threads);
 
   printf("Computing Serially.\n");
 
