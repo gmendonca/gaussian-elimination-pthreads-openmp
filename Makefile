@@ -15,9 +15,6 @@ program: gauss.c threads_gauss.c chunk_threads_gauss.c openmp_gauss.c chunk_thpo
 
 	 $(CC) thpool_gauss.c thpool.c -pthread -o pool.out
 
-install:
-	source script.sh
-
 
 clean:
 	rm -rf *.out
