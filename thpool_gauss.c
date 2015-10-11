@@ -14,7 +14,6 @@
 #include <sys/times.h>
 #include <sys/time.h>
 #include <time.h>
-#include <pthread.h>
 #include "thpool.h"
 
 /* Program Parameters */
@@ -33,6 +32,8 @@ void gauss();  /* The function you will provide.
 * It is this routine that is timed.
 * It is called only on the parent.
 */
+
+threadpool thpool;
 
 /* returns a seed for srand based on the time */
 unsigned int time_seed() {
@@ -207,7 +208,7 @@ void gauss() {
 
     printf("Computing Serially.\n");
 
-    threadpool thpool = thpool_init(4);
+    thpool = thpool_init(4);
 
     /* Gaussian elimination */
     for (norm = 0; norm < N - 1; norm++) {
