@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
 
 void *inner_loop(void * param){
     int* norm = (int *) param;
-    printf("thread = %d\n", *norm);
+    //printf("thread = %d\n", *norm);
     float multiplier;
     int row, col;
     for (row = *norm + 1; row < N; row++) {
