@@ -1,7 +1,27 @@
-# parallel-algorithms
+# Gaussian Elimination
+
+This program is a C implementation to improve performance of a Gaussian Elimination Code, using OpenMP, Pthreads and [Pool of Threads](https://github.com/Pithikos/C-Thread-Pool)
+
+You can compile everything using the Makefile and run the objects created.
+```sh
+$ make
+```
+There is a script with alias for running the programs. You can type:
+```sh
+$ source script.sh
+```
+Then, type:
+```sh
+$ help
+```
+You will see all the alias to run the program. It should be run after ```sh make``` and should be with `source`
+
+For run the serial version. you can type:
 
 ```sh
 $ gcc gauss.c -o gauss.out
+```
+
 
 $ gcc threads_gauss.c -pthread -o threads.out
 

@@ -1,4 +1,3 @@
-SHELL:=/bin/bash
 CC:=gcc
 
 program: gauss.c threads_gauss.c chunk_threads_gauss.c openmp_gauss.c chunk_thpool_gauss.c thpool_gauss.c thpool.c
