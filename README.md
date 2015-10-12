@@ -62,15 +62,15 @@ $ ./openmp.out <matrix_dimensions> [random seed]
 For compile and run the Pool of threads implementation. you can type:
 
 ```sh
-$ gcc chunk_thpool_gauss.c thpool.c -o chunkpool.out
+$ gcc thpool_gauss.c thpool.c -o pool.out
 
-$ ./chunkpool.out <matrix_dimensions> [number of threads] [random seed]
+$ ./pool.out <matrix_dimensions> [number of threads] [random seed]
 ```
 
 For compile and run the Pool of threads implementation with chunks. you can type:
 
 ```sh
-$ gcc thpool_gauss.c thpool.c -o pool.out
+$ gcc chunk_thpool_gauss.c thpool.c -o chunkpool.out
 
-$ ./pool.out <matrix_dimensions> [number of threads] [random seed]
+$ ./chunkpool.out <matrix_dimensions> [number of threads] [random seed]
 ```
