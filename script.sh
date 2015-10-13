@@ -2,32 +2,32 @@
 
 gauss()
 {
-  ./gauss.out
+  ./gauss.out $1 $2
 }
 
 threads_gauss()
 {
-  ./threads.out
+  ./threads.out $1 $2
 }
 
 chunk_threads()
 {
-  ./chunkthreads.out
+  ./chunkthreads.out $1 $2 $3
 }
 
 openmp()
 {
-  ./openmp.out
+  ./openmp.out $1 $2
 }
 
 pool_threads()
 {
-  ./pool.out
+  ./pool.out $1 $2 $3
 }
 
 chunk_pool_threads()
 {
-  ./chunkpool.out
+  ./chunkpool.out $1 $2 $3
 }
 
 help()
